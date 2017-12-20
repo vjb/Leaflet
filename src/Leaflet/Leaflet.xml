@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<widget id="Leaflet.widget.Leaflet" needsEntityContext="false"
+<widget id="Leaflet.widget.Leaflet" needsEntityContext="true"
     xmlns="http://www.mendix.com/widget/1.0/">
     <name>Leaflet Maps</name>
     <description>Widget for Leaflet Maps</description>
@@ -453,6 +453,21 @@
             <category>GeoJSON</category>
             <description>Microflow that will be triggered by clicking on a feature. If you set the Feature Entity and Attribute, it will create a new object and pass it to the microflow.</description>
             <returnType type="Void"></returnType>
+        </property>
+
+        <property key="clickFeature" type="microflow" required="false" >
+            <caption>On feature click</caption>
+            <category>ArcGIS</category>
+            <description>Microflow that will be triggered by clicking on a feature.</description>
+            <returnType type="Void"></returnType>
+        </property>
+        <property key="objectIdAttr" type="attribute" required="false" >
+            <caption>Selected Object Attribute</caption>
+            <category>ArcGIS</category>
+            <description>The selected objectID will be stored in this attribute</description>
+            <attributeTypes>
+                 <attributeType name="Integer" />
+            </attributeTypes>
         </property>
     </properties>
 </widget>

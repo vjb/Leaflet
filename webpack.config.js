@@ -205,7 +205,7 @@ const webpackConfig = {
 }
 
 if (env !== 'production') {
-    //webpackConfig.devtool = 'source-map';
+    webpackConfig.devtool = 'source-map';
 } else {
     webpackConfig.plugins.push(new BabiliPlugin({}, {
         test: /\.js$/,
@@ -223,4 +223,3 @@ if (env !== 'production') {
 }
 
 module.exports = webpackConfig;
-

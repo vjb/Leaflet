@@ -10,15 +10,21 @@ import Leaflet from 'leaflet';
 import 'leaflet-providers';
 import 'leaflet.locatecontrol';
 import 'leaflet-fullscreen';
+import 'leaflet.markercluster';
 
 import domStyle from 'dojo/dom-style';
 import dojoArray from 'dojo/_base/array';
 import domAttr from 'dojo/dom-attr';
 
+import esri from 'esri-leaflet';
+import cluster from 'esri-leaflet-cluster';
+
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
 import 'leaflet.locatecontrol/dist/L.Control.Locate.css';
 import 'leaflet.locatecontrol/dist/L.Control.Locate.mapbox.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 Leaflet.Icon.Default.imagePath = window.require.toUrl('Leaflet/widget/ui/').split('?')[ 0 ];
 
@@ -278,7 +284,44 @@ Get one: http://developer.here.com/`);
             this._addGeoJSON();
         }
 
+        const token = 'K6T0Y02z_SbWsAKDt2ZzTf2WTV_ccuJsyXQEQOUhi5uhyTU96f5GuPG1lJBTxnISIfFisk1WmFpL1sQeFLWpdd8Dc_eNNuXbx8EKaWtkeHjNaqkPws-6XmRFnBf2AhDAjeqLuH9eDku0Q5JPpbgekQ..';
+        const url = 'https://services8.arcgis.com/EecZDBhrcU2uSdm6/arcgis/rest/services/CMB/FeatureServer/0';
+
+        const self2 = this;
+        function onEachFeature(feature, layer) {
+            //bind click
+            layer.on({
+                click: self2._onClickFeatureArcGIS.bind(self2, feature),
+            });
+        }
+
+        const params = {
+            url: url,
+            token: token,
+            fields: ['OBJECTID'],
+            //where: "OBJECTID = 1",
+            onEachFeature: onEachFeature,
+        };
+        const cities = cluster.featureLayer(params).addTo(this._map);
+
+
+        //cities.bindPopup(function (layer) {
+        //    return Leaflet.Util.template('<p>{OBJECTID}</p>', layer.feature.properties);
+        //});
+
+
         this._fetchMarkers(callback);
+    },
+
+    _onClickFeatureArcGIS(feature) {
+        this.log('_onClickFeatureArcGIS', feature);
+
+        const featureId = feature.id;
+        this._contextObj.set(this.objectIdAttr, featureId);
+        const guid = this._contextObj && this._contextObj.getGuid && this._contextObj.getGuid() || null;
+        this.execute(this.clickFeature, guid, function() {}, err => {
+            console.error(this.id + ' Error executing on click ArcGIS microflow: ', err);
+        });
     },
 
     _addGeoJSON() {
@@ -390,9 +433,10 @@ Get one: http://developer.here.com/`);
     _refreshMap(objs, callback) {
         this.log('_refreshMap');
 
-        let panPosition = this._defaultPosition;
-        const positions = [];
+        //let panPosition = this._defaultPosition;
+        //const positions = [];
 
+/*
         dojoArray.forEach(objs, obj => {
             this._addMarker(obj);
             const position = this._getLatLng(obj);
@@ -412,6 +456,7 @@ Get one: http://developer.here.com/`);
         } else {
             this._map.fitBounds(positions);
         }
+*/
 
         runCallback.call(this, callback, "_refreshMap");
     },

@@ -70,10 +70,16 @@
   },
   "dependencies": {
     "es6-promise": "^4.1.1",
+    "eslint": "^4.13.1",
+    "eslint-plugin-import": "^2.8.0",
+    "esri-leaflet": "^2.1.1",
+    "esri-leaflet-cluster": "^2.0.0",
+    "file-loader": "^1.1.6",
     "leaflet": "^1.2.0",
     "leaflet-fullscreen": "^1.0.2",
     "leaflet-providers": "^1.1.17",
     "leaflet.locatecontrol": "^0.62.0",
+    "leaflet.markercluster": "^1.2.0",
     "whatwg-fetch": "^2.0.3"
   }
 }
