@@ -454,12 +454,28 @@
             <description>Microflow that will be triggered by clicking on a feature. If you set the Feature Entity and Attribute, it will create a new object and pass it to the microflow.</description>
             <returnType type="Void"></returnType>
         </property>
-
+        <!-- ArcGIS -->
         <property key="clickFeature" type="microflow" required="false" >
             <caption>On feature click</caption>
             <category>ArcGIS</category>
             <description>Microflow that will be triggered by clicking on a feature.</description>
             <returnType type="Void"></returnType>
+        </property>
+        <property key="accessTokenAttr" type="attribute" required="false" >
+            <caption>Access token</caption>
+            <category>ArcGIS</category>
+            <description>A valid ArcGIS access token should be present in this attribute.</description>
+            <attributeTypes>
+                 <attributeType name="String" />
+            </attributeTypes>
+        </property>
+        <property key="featureServerURLAttr" type="attribute" required="false" >
+            <caption>Feature server</caption>
+            <category>ArcGIS</category>
+            <description>A URL to an ArcGIS feature server.</description>
+            <attributeTypes>
+                 <attributeType name="String" />
+            </attributeTypes>
         </property>
         <property key="objectIdAttr" type="attribute" required="false" >
             <caption>Selected Object Attribute</caption>
@@ -467,6 +483,36 @@
             <description>The selected objectID will be stored in this attribute</description>
             <attributeTypes>
                  <attributeType name="Integer" />
+            </attributeTypes>
+        </property>
+        <property key="searchIdsAttr" type="attribute" required="false" >
+            <caption>Search IDs Object Attribute</caption>
+            <category>ArcGIS</category>
+            <description>This attribute should contain a comma-separated string of object IDs to render.</description>
+            <attributeTypes>
+                 <attributeType name="String" />
+            </attributeTypes>
+        </property>
+        <!-- EDITING -->
+        <property key="newPointButton" type="boolean" defaultValue="false">
+            <caption>Create Point</caption>
+            <category>Editing</category>
+            <description>If set to true, the map will have a button to create a new point. The coordinates for this point are sent to the context object attributes set below.</description>
+        </property>
+        <property key="newPointLatAttr" type="attribute" required="false" >
+            <caption>New Point Lat</caption>
+            <category>Editing</category>
+            <description>This attribute will be populated with a new point's latitude.</description>
+            <attributeTypes>
+                 <attributeType name="Decimal" />
+            </attributeTypes>
+        </property>
+        <property key="newPointLongAttr" type="attribute" required="false" >
+            <caption>New Point Long</caption>
+            <category>Editing</category>
+            <description>This attribute will be populated with a new point's longitude.</description>
+            <attributeTypes>
+                 <attributeType name="Decimal" />
             </attributeTypes>
         </property>
     </properties>

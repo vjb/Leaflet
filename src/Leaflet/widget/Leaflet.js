@@ -11,6 +11,7 @@ import 'leaflet-providers';
 import 'leaflet.locatecontrol';
 import 'leaflet-fullscreen';
 import 'leaflet.markercluster';
+import 'leaflet-draw';
 
 import domStyle from 'dojo/dom-style';
 import dojoArray from 'dojo/_base/array';
@@ -25,6 +26,7 @@ import 'leaflet.locatecontrol/dist/L.Control.Locate.css';
 import 'leaflet.locatecontrol/dist/L.Control.Locate.mapbox.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 
 Leaflet.Icon.Default.imagePath = window.require.toUrl('Leaflet/widget/ui/').split('?')[ 0 ];
 
@@ -98,6 +100,10 @@ export default defineWidget('Leaflet', template, {
     _handle: null,
     _contextObj: null,
     _map: null,
+    _esriLayer: null,
+    _currentSelected: null, // object ID
+    _currentSelectedUserDefinedID: null, //mak ID
+    _drawnItems: null,
 
     constructor() {
         this.execute = execute.bind(this);
@@ -124,10 +130,12 @@ export default defineWidget('Leaflet', template, {
         this._contextObj = obj;
         this._resetSubscriptions();
 
-        if (!this._map) {
-            this._loadMap(callback);
-        } else {
-            this._fetchMarkers(callback);
+        if(obj) {
+            if (!this._map) {
+                this._loadMap(callback);
+            } else {
+                this._fetchMarkers(callback);
+            }
         }
     },
 
@@ -155,6 +163,47 @@ export default defineWidget('Leaflet', template, {
                     this._fetchMarkers();
                 },
             });
+        }
+
+        //subscription for changes to visible or selected ArcGIS items
+        if (this._contextObj) {
+            if (this.objectIdAttr) {
+                this.subscribe({
+                    guid: this._contextObj.getGuid(),
+                    attr: this.objectIdAttr,
+                    callback: () => {
+                        this._fetchMarkers();
+                    },
+                });
+            }
+            if (this.searchIdsAttr) {
+                this.subscribe({
+                    guid: this._contextObj.getGuid(),
+                    attr: this.searchIdsAttr,
+                    callback: () => {
+                        this._fetchMarkers();
+                    },
+                });
+            }
+            //subscription for changes to new lat/lon points from the context entity
+            if (this.newPointLatAttr) {
+                this.subscribe({
+                    guid: this._contextObj.getGuid(),
+                    attr: this.newPointLatAttr,
+                    callback: () => {
+                        this._createMoveDrawnPoint();
+                    },
+                });
+            }
+            if (this.newPointLongAttr) {
+                this.subscribe({
+                    guid: this._contextObj.getGuid(),
+                    attr: this.newPointLongAttr,
+                    callback: () => {
+                        this._createMoveDrawnPoint();
+                    },
+                });
+            }
         }
     },
 
@@ -284,44 +333,199 @@ Get one: http://developer.here.com/`);
             this._addGeoJSON();
         }
 
-        const token = 'K6T0Y02z_SbWsAKDt2ZzTf2WTV_ccuJsyXQEQOUhi5uhyTU96f5GuPG1lJBTxnISIfFisk1WmFpL1sQeFLWpdd8Dc_eNNuXbx8EKaWtkeHjNaqkPws-6XmRFnBf2AhDAjeqLuH9eDku0Q5JPpbgekQ..';
-        const url = 'https://services8.arcgis.com/EecZDBhrcU2uSdm6/arcgis/rest/services/CMB/FeatureServer/0';
-
+        //ARCGis layer
+        const token = this._contextObj.get(this.accessTokenAttr);
+        const url = this._contextObj.get(this.featureServerURLAttr);
         const self2 = this;
         function onEachFeature(feature, layer) {
             //bind click
             layer.on({
-                click: self2._onClickFeatureArcGIS.bind(self2, feature),
+                click: self2._onClickFeatureArcGIS.bind(self2, feature, true),
+                contextmenu: self2._onContextFeatureArcGIS.bind(self2, feature),
             });
         }
 
         const params = {
             url: url,
-            token: token,
-            fields: ['OBJECTID'],
+            pointToLayer: function (geojson, latlng) {
+                return Leaflet.circleMarker(latlng);
+            },
+            fields: ['OBJECTID', 'MAK_ID'],
             //where: "OBJECTID = 1",
             onEachFeature: onEachFeature,
+            style: {
+                color: '#5B7CBA',
+                weight: 2,
+                opacity: 0.85,
+                fillOpacity: 0.5,
+            },
+            spiderfyOnMaxZoom: true,
+            //showCoverageOnHover: false,
+            //zoomToBoundsOnClick: false,
+            disableClusteringAtZoom: 5,
+            //minZoom: 12,
+            //maxZoom: 20,
+            where: "1=0",
         };
-        const cities = cluster.featureLayer(params).addTo(this._map);
+        if (token) {
+            params.token = token;
+        }
+        this._esriLayer = cluster.featureLayer(params).addTo(this._map);
 
+        //Drawing layer
+        if( this.newPointButton) {
+            this._prepDrawingLayer();
+        }
+        this._createMoveDrawnPoint();
 
-        //cities.bindPopup(function (layer) {
-        //    return Leaflet.Util.template('<p>{OBJECTID}</p>', layer.feature.properties);
-        //});
+        //listenerforOnLocationFound
+        this._map.on('locationfound', this._onLocationFound.bind(this));
 
-
+        //Add the markers
         this._fetchMarkers(callback);
     },
 
-    _onClickFeatureArcGIS(feature) {
-        this.log('_onClickFeatureArcGIS', feature);
+    _prepDrawingLayer() {
+        this._drawnItems = new Leaflet.FeatureGroup();
+        this._map.addLayer(this._drawnItems);
+        const drawControl = new Leaflet.Control.Draw({
+            edit: {
+                featureGroup: this._drawnItems,
+            },
+            draw: {
+                polygon: false,
+                marker: {
+                    shapeOptions: {
+                        color: '#89ba45',
+                        weight: 2,
+                        opacity: 0.85,
+                        fillOpacity: 0.5,
+                    },
+                },
+                circle: false,
+                polyline: false,
+                rectangle: false,
+                circlemarker: {
+                    shapeOptions: {
+                        color: '#89ba45',
+                        weight: 2,
+                        opacity: 0.85,
+                        fillOpacity: 0.5,
+                    },
+                },
+                toolbar: {
+                    actions: {
+                        title: 'Cancel drawing',
+                        text: 'Cancel',
+                    },
+                    finish: {
+                        title: 'Finish drawing',
+                        text: 'Finish',
+                    },
+                    undo: {
+                        title: 'Delete last point drawn',
+                        text: 'Delete last point',
+                    },
+                    buttons: {
+                        circlemarker: 'Draw a circlemarker',
+                        marker: 'Draw a marker',
+                    },
+                },
+            },
+        });
+        this._map.addControl(drawControl);
+        this._map.on(Leaflet.Draw.Event.CREATED, function (e) {
+            const layer = e.layer;
+            this._setEditPointStyle(layer);
+            //remove any other points
+            this._clearDrawnItems();
+            this._drawnItems.addLayer(layer);
+            this._updateNewLatLongPoints(layer);
+        }.bind(this));
+        this._map.on(Leaflet.Draw.Event.EDITED, function (e) {
+            const layers = e.layers;
+            layers.eachLayer(function (layer) {
+                this._updateNewLatLongPoints(layer);
+            }.bind(this));
+        }.bind(this));
+    },
 
-        const featureId = feature.id;
+    _onClickFeatureArcGIS(feature, runMF) {
+        this.log('_onClickFeatureArcGIS', feature);
+        const userID = "MAK_ID".toLowerCase();
+        const featureId = feature.properties[ userID ]; //feature.id;
         this._contextObj.set(this.objectIdAttr, featureId);
         const guid = this._contextObj && this._contextObj.getGuid && this._contextObj.getGuid() || null;
-        this.execute(this.clickFeature, guid, function() {}, err => {
-            console.error(this.id + ' Error executing on click ArcGIS microflow: ', err);
+        if (runMF && this.clickFeature) {
+            this.execute(this.clickFeature, guid, function() {}, err => {
+                console.error(this.id + ' Error executing on click ArcGIS microflow: ', err);
+            });
+        }
+        this._setSelectionStyling();
+    },
+
+    //Move this point to the edit layer
+    _onContextFeatureArcGIS(feature) {
+        //const latlng = feature.getLatLng();
+        const lat = feature.geometry.coordinates[ 1 ];
+        const lng = feature.geometry.coordinates[ 0 ];
+        this._contextObj.set(this.newPointLatAttr, lat); //this._roundNumber(latlng.lat, 6));
+        this._contextObj.set(this.newPointLongAttr, lng);//this._roundNumber(latlng.long, 6));
+        this._onClickFeatureArcGIS(feature, false);
+
+        if (this.rightClickFeature) {
+            const guid = this._contextObj && this._contextObj.getGuid && this._contextObj.getGuid() || null;
+            this.execute(this.rightClickFeature, guid, function() {}, err => {
+                console.error(this.id + ' Error executing on click ArcGIS microflow: ', err);
+            });
+        }
+    },
+
+    _setEditPointStyle(point) {
+        point.setStyle({
+            color: '#89ba45',
+            weight: 3,
+            opacity: 0.85,
+            fillOpacity: 0.5,
         });
+        point.bringToFront();
+    },
+
+    _updateNewLatLongPoints(layer) {
+        if(this._contextObj && this.newPointLatAttr && this.newPointLongAttr) {
+            const latlng = layer.getLatLng();
+            const lat = this._roundNumber(latlng.lat, 8);
+            const lng = this._roundNumber(latlng.lng, 8);
+            this.unsubscribeAll();
+            this._contextObj.set(this.newPointLatAttr, lat); //this._roundNumber(latlng.lat, 6));
+            this._contextObj.set(this.newPointLongAttr, lng);//this._roundNumber(latlng.long, 6));
+            this._resetSubscriptions();
+        }
+    },
+
+    _createMoveDrawnPoint() {
+        if (this._contextObj && this.newPointLatAttr && this.newPointLongAttr) {
+            const lat = this._contextObj.get(this.newPointLatAttr) + 0;
+            const lng = this._contextObj.get(this.newPointLongAttr) + 0;
+
+            if(lat && lng) {
+                this._clearDrawnItems();
+                const marker = Leaflet.circleMarker([lat, lng]);
+                this._setEditPointStyle(marker);
+                this._drawnItems.addLayer(marker);
+            }
+        }
+    },
+
+    _clearDrawnItems() {
+        const drawnItems = this._drawnItems;
+        drawnItems.eachLayer(function(l) {
+            drawnItems.removeLayer(l);
+        });
+    },
+
+    _roundNumber(num, dec) {
+        return Math.round(num * Math.pow(10, dec)) / Math.pow(10, dec);
     },
 
     _addGeoJSON() {
@@ -419,6 +623,30 @@ Get one: http://developer.here.com/`);
     _fetchMarkers(callback) {
         this.log('_fetchMarkers');
 
+        if (this._contextObj) {
+            const searchKeys = this._contextObj.get(this.searchIdsAttr);
+            const selectedKey = this._contextObj.get(this.objectIdAttr);
+
+            const fl = this._esriLayer;
+            const map = this._map;
+            //if we have keys to search on, fire the search and focus the map on the results.
+            let searchQuery = "1=0";
+            if ("" !== searchKeys) {
+                searchQuery = "MAK_ID IN (" + searchKeys + ")";
+            }
+            const self2 = this;
+            if (searchQuery !== this._currentQuery) {
+                fl.query().where(searchQuery).bounds(function(error, latLngBounds){
+                    if(!error) {
+                        map.fitBounds(latLngBounds.pad(0.15));
+                    }
+                    fl.setWhere(searchQuery, self2._setSelectionStyling.bind(self2));
+                });
+                this._currentQuery = searchQuery;
+            } else if (selectedKey !== this._currentSelectedUserDefinedID) {
+                this._setSelectionStyling();
+            }
+        }
         if (this.gotocontext) {
             this._goToContext(callback);
         } else if (this.updateRefresh) {
@@ -430,13 +658,50 @@ Get one: http://developer.here.com/`);
         }
     },
 
+    //Callback used when the ESRI where clause changes
+    //Sets selected feature styling
+    _setSelectionStyling() {
+        if (this._contextObj) {
+            const objKey = this._contextObj.get(this.objectIdAttr);
+            const fl = this._esriLayer;
+            //if we have keys to search on, fire the search and focus the map on the results.
+            if ("" !== objKey) {
+                const self2 = this;
+                fl.query().where("MAK_ID = " + objKey).ids(function(error, ids){
+                    if (ids && 0 < ids.length) {
+                        const pkID = ids[ 0 ];
+                        if (self2._currentSelected) {
+                            fl.resetStyle(self2._currentSelected);
+                        }
+
+                        if (pkID) {
+                            fl.setFeatureStyle(pkID, {
+                                color: '#BA454E',
+                                weight: 2,
+                                opacity: 0.85,
+                                fillOpacity: 0.5,
+                            });
+                        }
+                        self2._currentSelected = pkID;
+                        self2._currentSelectedUserDefinedID = objKey;
+                    }
+                });
+            }
+        }
+    },
+
+    _centerMapOnMarker(marker) {
+        const latLngs = [ marker.getLatLng() ];
+        const markerBounds = Leaflet.latLngBounds(latLngs);
+        this._map.fitBounds(markerBounds);
+    },
     _refreshMap(objs, callback) {
         this.log('_refreshMap');
 
         //let panPosition = this._defaultPosition;
         //const positions = [];
 
-/*
+        /*
         dojoArray.forEach(objs, obj => {
             this._addMarker(obj);
             const position = this._getLatLng(obj);
@@ -651,6 +916,18 @@ Get one: http://developer.here.com/`);
         } else {
             runCallback.call(this, callback, "_goToContext");
         }
+    },
+
+    _onLocationFound(e) {
+        //e.latlng;
+        console.log("you are here:" + e.latlng.toString());
+        const fl = this._esriLayer;
+        fl.query().nearby(e.latlng, 500).ids(function(error, ids){
+            if (ids && 0 < ids.length) {
+                const ida = ids.join(",");
+                fl.setWhere("OBJECTID IN (" + ida + ")");
+            }
+        });
     },
 
 });
