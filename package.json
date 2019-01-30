@@ -1,7 +1,7 @@
 {
   "name": "Leaflet",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Add different type of maps to your application, using Leaflet.js!",
   "scripts": {
     "webpack": "./node_modules/.bin/webpack",
@@ -80,7 +80,9 @@
     "leaflet-fullscreen": "^1.0.2",
     "leaflet-providers": "^1.1.17",
     "leaflet.locatecontrol": "^0.62.0",
+    "leaflet-control-geocoder": "https://github.com/perliedman/leaflet-control-geocoder.git",
     "leaflet.markercluster": "^1.2.0",
-    "whatwg-fetch": "^2.0.3"
+    "whatwg-fetch": "^2.0.3",
+    "widget-base-helpers": "^1.0.16"
   }
 }
