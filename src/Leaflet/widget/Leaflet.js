@@ -17,7 +17,7 @@ import domStyle from 'dojo/dom-style';
 import dojoArray from 'dojo/_base/array';
 import domAttr from 'dojo/dom-attr';
 
-import esri from 'esri-leaflet';
+//import esri from 'esri-leaflet';
 import cluster from 'esri-leaflet-cluster';
 
 import 'leaflet/dist/leaflet.css';
