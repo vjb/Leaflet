@@ -532,7 +532,7 @@
             <category>ArcGIS</category>
             <description>The selected objectID will be stored in this attribute</description>
             <attributeTypes>
-                 <attributeType name="Integer" />
+                 <attributeType name="String"  />
             </attributeTypes>
         </property>
         <property key="searchIdsAttr" type="attribute" required="false" >

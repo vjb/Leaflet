@@ -733,7 +733,7 @@ Get one: http://developer.here.com/`);
             //if we have keys to search on, fire the search and focus the map on the results.
             if ("" !== objKey) {
                 const self2 = this;
-                fl.query().where("MAK_ID = " + objKey).ids(function(error, ids){
+                fl.query().where(this.globalID_in_GIS + " = " + objKey).ids(function(error, ids){
                     if (ids && 0 < ids.length) {
                         const pkID = ids[ 0 ];
                         if (self2._currentSelected) {
