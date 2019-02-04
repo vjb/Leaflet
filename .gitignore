@@ -11,6 +11,8 @@ test/theme/
 test/userlib/
 test/.classpath
 test/.project
+test/.mendix-cache
+test/.svn
 *.launch
 *.tmp
 *.lock
