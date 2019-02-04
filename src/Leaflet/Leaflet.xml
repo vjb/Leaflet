@@ -543,6 +543,11 @@
                  <attributeType name="String" />
             </attributeTypes>
         </property>
+         <property key="globalID_in_GIS" type="string" required="false" defaultValue="GlobalID">
+            <caption>Unique ID field in GIS</caption>
+            <category>ArcGIS</category>
+            <description>This attribute is a string and should the left-hand side of the 'WHERE' clause for GIS search (e.g., GlobalID) </description>
+        </property>
         <!-- EDITING -->
         <property key="newPointButton" type="boolean" defaultValue="false">
             <caption>Create Point</caption>

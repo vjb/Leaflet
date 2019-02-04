@@ -364,7 +364,8 @@ Get one: http://developer.here.com/`);
             pointToLayer: function (geojson, latlng) {
                 return Leaflet.circleMarker(latlng);
             },
-            fields: ['OBJECTID', 'MAK_ID'],
+            // these are the return fields //
+            fields: ['OBJECTID', this.globalID_in_GIS],
             //where: "OBJECTID = 1",
             onEachFeature: onEachFeature,
             style: {
@@ -697,7 +698,7 @@ Get one: http://developer.here.com/`);
             //if we have keys to search on, fire the search and focus the map on the results.
             let searchQuery = "1=0";
             if ("" !== searchKeys) {
-                searchQuery = "MAK_ID IN (" + searchKeys + ")";
+                searchQuery = this.globalID_in_GIS + " IN (" + searchKeys + ")";
             }
             const self2 = this;
             if (searchQuery !== this._currentQuery) {
