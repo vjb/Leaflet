@@ -19,6 +19,7 @@ import dojoArray from 'dojo/_base/array';
 import domAttr from 'dojo/dom-attr';
 
 
+
 //import esri from 'esri-leaflet';
 import cluster from 'esri-leaflet-cluster';
 
@@ -961,6 +962,7 @@ Get one: http://developer.here.com/`);
 
         return null;
     },
+    
 
     _goToContext(callback) {
         this.log('_goToContext');
