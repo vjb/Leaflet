@@ -467,8 +467,11 @@ Get one: http://developer.here.com/`);
 
     _onClickFeatureArcGIS(feature, runMF) {
         this.log('_onClickFeatureArcGIS', feature);
+        /* VJB: not sure why this userID stuff is here
         const userID = "MAK_ID".toLowerCase();
         const featureId = feature.properties[ userID ]; //feature.id;
+        */
+        const featureId = feature.properties[ this.globalID_in_GIS ].toUpperCase();
         this._contextObj.set(this.objectIdAttr, featureId);
         const guid = this._contextObj && this._contextObj.getGuid && this._contextObj.getGuid() || null;
         if (runMF && this.clickFeature) {
