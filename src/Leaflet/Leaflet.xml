@@ -556,11 +556,19 @@
             <attributeTypes>
                  <attributeType name="Decimal" />
             </attributeTypes>
-        </property>
+        </property>  
         <property key="newPointLongAttr" type="attribute" required="false" >
             <caption>New Point Long</caption>
             <category>Editing</category>
             <description>This attribute will be populated with a new point's longitude.</description>
+            <attributeTypes>
+                 <attributeType name="Decimal" />
+            </attributeTypes>
+        </property>
+         <property key="zoomLevel" type="attribute" required="false" >
+            <caption>Zoom Level</caption>
+            <category>Editing</category>
+            <description>This attribute will be populated with the zoom level of the last added/updated point.</description>
             <attributeTypes>
                  <attributeType name="Decimal" />
             </attributeTypes>

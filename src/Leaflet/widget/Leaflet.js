@@ -510,9 +510,11 @@ Get one: http://developer.here.com/`);
             const latlng = layer.getLatLng();
             const lat = this._roundNumber(latlng.lat, 8);
             const lng = this._roundNumber(latlng.lng, 8);
+            const zoomLevel = this._map.getZoom();
             this.unsubscribeAll();
             this._contextObj.set(this.newPointLatAttr, lat); //this._roundNumber(latlng.lat, 6));
             this._contextObj.set(this.newPointLongAttr, lng);//this._roundNumber(latlng.long, 6));
+            this._contextObj.set(this.zoomLevel, zoomLevel);
             this._resetSubscriptions();
         }
     },
@@ -962,7 +964,6 @@ Get one: http://developer.here.com/`);
 
         return null;
     },
-    
 
     _goToContext(callback) {
         this.log('_goToContext');
