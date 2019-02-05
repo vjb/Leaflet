@@ -182,6 +182,7 @@ export default defineWidget('Leaflet', template, {
                     guid: this._contextObj.getGuid(),
                     attr: this.objectIdAttr,
                     callback: () => {
+                        console.log("from objectIdAttr subscription");
                         this._fetchMarkers();
                     },
                 });
@@ -191,7 +192,28 @@ export default defineWidget('Leaflet', template, {
                     guid: this._contextObj.getGuid(),
                     attr: this.searchIdsAttr,
                     callback: () => {
+                        console.log("from searchIdsAttr subscription");
                         this._fetchMarkers();
+                    },
+                });
+            }
+            // VJB: adding listeners for panning to specific lat/long (visible)
+            if (this.panLat) {
+                this.subscribe({
+                    guid: this._contextObj.getGuid(),
+                    attr: this.panLat,
+                    callback: () => {
+                        console.log("Pan Lat Changed");
+                    },
+                });
+            }
+            if (this.panLong) {
+                this.subscribe({
+                    guid: this._contextObj.getGuid(),
+                    attr: this.panLong,
+                    callback: () => {
+                        console.log("Pan Long Changed");
+                        this._map.panTo([ parseFloat(this._contextObj.get("PanLat").toString()),parseFloat(this._contextObj.get("PanLong").toString()) ]);
                     },
                 });
             }

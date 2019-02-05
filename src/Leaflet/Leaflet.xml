@@ -527,7 +527,7 @@
                  <attributeType name="String" />
             </attributeTypes>
         </property>
-        <property key="objectIdAttr" type="attribute" required="false" >
+        <property key="objectIdAttr" type="attribute" required="false">
             <caption>Selected Object Attribute</caption>
             <category>ArcGIS</category>
             <description>The selected objectID will be stored in this attribute</description>
@@ -548,6 +548,23 @@
             <category>ArcGIS</category>
             <description>This attribute is a string and should the left-hand side of the 'WHERE' clause for GIS search (e.g., GlobalID) </description>
         </property>
+         <property key="panLat" type="attribute" required="false">
+            <caption>Latitude Pan Listener</caption>
+            <category>ArcGIS</category>
+            <description>Handle to manipulate panning</description>
+             <attributeTypes>
+                 <attributeType name="Decimal" />
+            </attributeTypes>
+        </property>
+         <property key="panLong" type="attribute" required="false" >
+            <caption>Longitude Pan Listener</caption>
+            <category>ArcGIS</category>
+            <description>Handle to manipulate panning</description>
+             <attributeTypes>
+                 <attributeType name="Decimal" />
+            </attributeTypes>
+        </property>
+
         <!-- EDITING -->
         <property key="newPointButton" type="boolean" defaultValue="false">
             <caption>Create Point</caption>
