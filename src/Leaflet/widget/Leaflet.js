@@ -174,7 +174,6 @@ export default defineWidget('Leaflet', template, {
                 },
             });
         }
-
         //subscription for changes to visible or selected ArcGIS items
         if (this._contextObj) {
             if (this.objectIdAttr) {
@@ -213,7 +212,7 @@ export default defineWidget('Leaflet', template, {
                     attr: this.panLong,
                     callback: () => {
                         console.log("Pan Long Changed");
-                        this._map.panTo([ parseFloat(this._contextObj.get("PanLat").toString()),parseFloat(this._contextObj.get("PanLong").toString()) ]);
+                        this._map.panTo([ parseFloat(this._contextObj.get("PanLat").toString()), parseFloat(this._contextObj.get("PanLong").toString()) ]);
                     },
                 });
             }
